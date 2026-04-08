@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kick Multichat</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+  :root {
+    --bg: #0a0a0c;
+    --surface: #111115;
+    --surface2: #18181d;
+    --border: #2a2a33;
+    --text: #e8e6f0;
+    --text-dim: #7a7888;
+    --accent: #53fc18;
+    --accent-dim: #53fc1822;
+    --kick-green: #53fc18;
+    --danger: #ff4060;
+    --danger-dim: #ff406022;
+    --info: #3a86ff;
+    --warning: #ffbe0b;
+  }
+
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    font-family: 'Outfit', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  .app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    max-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 20px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    z-index: 10;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .logo-icon {
+    width: 34px;
+    height: 34px;
+    background: var(--kick-green);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    color: #0a0a0c;
+    font-size: 14px;
+    letter-spacing: -0.5px;
+    font-family: 'JetBrains Mono', monospace;
+    box-shadow: 0 0 20px var(--accent-dim);
+  }
+
+  .logo-text {
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: -0.3px;
+    white-space: nowrap;
+  }
+
+  .logo-text span {
+    color: var(--kick-green);
+  }
+
+  .header-controls {
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+
+  .btn {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn:hover { background: var(--border); }
+
+  .btn-accent {
+    background: var(--kick-green);
+    color: #0a0a0c;
+    border-color: var(--kick-green);
+    font-weight: 700;
+  }
+  .btn-accent:hover {
+    background: #6afd45;
+    border-color: #6afd45;
+    box-shadow: 0 0 16px var(--accent-dim);
+  }
+
+  .btn-danger {
+    border-color: var(--danger);
+    color: var(--danger);
+    background: var(--danger-dim);
+  }
+  .btn-danger:hover { background: #ff406044; }
+
+  /* ── CHANNEL INPUT BAR ── */
+  .channel-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    flex-wrap: wrap;
+  }
+
+  .channel-bar label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    flex-shrink: 0;
+  }
+
+  .channel-input {
+    flex: 1;
+    min-width: 200px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .channel-input:focus {
+    border-color: var(--kick-green);
+    box-shadow: 0 0 0 3px var(--accent-dim);
+  }
+
+  .channel-input::placeholder {
+    color: var(--text-dim);
+  }
+
+  /* ── CHANNEL TAGS ── */
+  .channel-tags {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding: 0 20px;
+    min-height: 0;
+  }
+
+  .channel-tags:not(:empty) {
+    padding-top: 10px;
+    padding-bottom: 10px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tag {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+    animation: tagIn 0.2s ease;
+  }
+
+  @keyframes tagIn {
+    from { transform: scale(0.85); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .tag.connected {
+    background: var(--accent-dim);
+    border: 1px solid #53fc1844;
+    color: var(--kick-green);
+  }
+
+  .tag.connecting {
+    background: #ffbe0b18;
+    border: 1px solid #ffbe0b33;
+    color: var(--warning);
+  }
+
+  .tag.error {
+    background: var(--danger-dim);
+    border: 1px solid #ff406033;
+    color: var(--danger);
+  }
+
+  .tag-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .tag.connected .tag-dot {
+    animation: pulse 2s ease infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .tag-close {
+    cursor: pointer;
+    opacity: 0.5;
+    font-size: 14px;
+    line-height: 1;
+    transition: opacity 0.15s;
+  }
+  .tag-close:hover { opacity: 1; }
+
+  /* ── CHAT AREA ── */
+  .chat-wrapper {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 20px;
+    scroll-behavior: smooth;
+  }
+
+  .chat-messages::-webkit-scrollbar { width: 6px; }
+  .chat-messages::-webkit-scrollbar-track { background: transparent; }
+  .chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  .chat-messages::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+
+  .msg {
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 14px;
+    line-height: 1.5;
+    animation: msgIn 0.15s ease;
+    word-wrap: break-word;
+    transition: background 0.1s;
+  }
+
+  .msg:hover {
+    background: var(--surface);
+  }
+
+  @keyframes msgIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .msg-channel {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-right: 6px;
+    display: inline-block;
+    vertical-align: middle;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .msg-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-right: 8px;
+  }
+
+  .msg-user {
+    font-weight: 700;
+    margin-right: 4px;
+    cursor: default;
+  }
+
+  .msg-user::after {
+    content: ':';
+    color: var(--text-dim);
+  }
+
+  .msg-content {
+    color: var(--text);
+    word-break: break-word;
+  }
+
+  .msg-content img.emote {
+    height: 24px;
+    vertical-align: middle;
+    margin: 0 2px;
+  }
+
+  .system-msg {
+    padding: 8px 10px;
+    font-size: 12px;
+    color: var(--text-dim);
+    font-style: italic;
+    text-align: center;
+    animation: msgIn 0.15s ease;
+  }
+
+  .system-msg.connected-msg { color: var(--kick-green); }
+  .system-msg.error-msg { color: var(--danger); }
+  .system-msg.info-msg { color: var(--info); }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 40px;
+    text-align: center;
+  }
+
+  .empty-icon {
+    width: 80px;
+    height: 80px;
+    background: var(--surface2);
+    border: 2px dashed var(--border);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    opacity: 0.6;
+  }
+
+  .empty-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.3px;
+  }
+
+  .empty-desc {
+    font-size: 14px;
+    color: var(--text-dim);
+    max-width: 360px;
+    line-height: 1.6;
+  }
+
+  /* ── SCROLL BUTTON ── */
+  .scroll-btn {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%) translateY(60px);
+    padding: 8px 20px;
+    background: var(--kick-green);
+    color: #0a0a0c;
+    border: none;
+    border-radius: 20px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 5;
+    box-shadow: 0 4px 20px rgba(83, 252, 24, 0.3);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .scroll-btn.visible {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .scroll-btn:hover {
+    box-shadow: 0 4px 30px rgba(83, 252, 24, 0.5);
+  }
+
+  /* ── STATUS BAR ── */
+  .status-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 20px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text-dim);
+    flex-shrink: 0;
+  }
+
+  .status-bar .stats {
+    display: flex;
+    gap: 16px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .status-bar .stat-value {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  /* ── COLOR PALETTE ── */
+  .color-palette {
+    --c0: #53fc18;
+    --c1: #3a86ff;
+    --c2: #ff006e;
+    --c3: #ffbe0b;
+    --c4: #8338ec;
+    --c5: #fb5607;
+    --c6: #06d6a0;
+    --c7: #e0aaff;
+    --c8: #f72585;
+    --c9: #4cc9f0;
+    --c10: #ff9e00;
+    --c11: #80ed99;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 640px) {
+    .header { padding: 10px 14px; gap: 10px; }
+    .logo-text { display: none; }
+    .channel-bar { padding: 10px 14px; }
+    .channel-tags:not(:empty) { padding-left: 14px; padding-right: 14px; }
+    .chat-messages { padding: 8px 14px; }
+    .status-bar { padding: 6px 14px; }
+    .header-controls .btn-label { display: none; }
+  }
+</style>
+</head>
+<body class="color-palette">
+<div class="app">
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">K</div>
+      <div class="logo-text">Multi<span>chat</span></div>
+    </div>
+    <div class="header-controls">
+      <button class="btn btn-accent" id="connectBtn" onclick="handleConnect()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        <span class="btn-label">Connect</span>
+      </button>
+      <button class="btn btn-danger" id="disconnectBtn" onclick="handleDisconnect()" style="display:none">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>
+        <span class="btn-label">Disconnect</span>
+      </button>
+      <button class="btn" onclick="clearChat()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+        <span class="btn-label">Clear</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- CHANNEL INPUT -->
+  <div class="channel-bar">
+    <label>Channels</label>
+    <input
+      class="channel-input"
+      id="channelInput"
+      type="text"
+      placeholder="Enter channel names separated by commas (e.g. xqc, ninja, amouranth)"
+      spellcheck="false"
+      onkeydown="if(event.key==='Enter')handleConnect()"
+    >
+  </div>
+
+  <!-- CHANNEL TAGS -->
+  <div class="channel-tags" id="channelTags"></div>
+
+  <!-- CHAT -->
+  <div class="chat-wrapper">
+    <div class="chat-messages" id="chatMessages">
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">💬</div>
+        <div class="empty-title">No channels connected</div>
+        <div class="empty-desc">Enter Kick channel names above and click Connect to start viewing combined chat messages in real time.</div>
+      </div>
+    </div>
+    <button class="scroll-btn" id="scrollBtn" onclick="scrollToBottom()">
+      ↓ Resume Auto-Scroll
+    </button>
+  </div>
+
+  <!-- STATUS BAR -->
+  <div class="status-bar">
+    <div>Kick Multichat — WebSocket via Pusher</div>
+    <div class="stats">
+      <span>Channels: <span class="stat-value" id="statChannels">0</span></span>
+      <span>Messages: <span class="stat-value" id="statMessages">0</span></span>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── STATE ──
+  const state = {
+    ws: null,
+    channels: new Map(), // channelName -> { chatroomId, status, colorIndex }
+    messageCount: 0,
+    autoScroll: true,
+    colorIndex: 0,
+    maxMessages: 800,
+  };
+
+  const PUSHER_KEY = '32cbd69e4b950bf97679';
+  const PUSHER_URL = `wss://ws-us2.pusher.com/app/${PUSHER_KEY}?protocol=7&client=js&version=8.4.0-rc2&flash=false`;
+
+  const CHANNEL_COLORS = [
+    '#53fc18','#3a86ff','#ff006e','#ffbe0b','#8338ec',
+    '#fb5607','#06d6a0','#e0aaff','#f72585','#4cc9f0',
+    '#ff9e00','#80ed99'
+  ];
+
+  const USER_COLORS = [
+    '#53fc18','#3a86ff','#ff006e','#ffbe0b','#8338ec',
+    '#fb5607','#06d6a0','#e0aaff','#f72585','#4cc9f0',
+    '#ff9e00','#80ed99','#d4a373','#a7c957','#e07a5f',
+    '#81b29a','#f2cc8f','#b5838d','#6d6875','#e5989b'
+  ];
+
+  const userColorMap = {};
+
+  function getUserColor(username) {
+    if (!userColorMap[username]) {
+      let hash = 0;
+      for (let i = 0; i < username.length; i++) {
+        hash = username.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      userColorMap[username] = USER_COLORS[Math.abs(hash) % USER_COLORS.length];
+    }
+    return userColorMap[username];
+  }
+
+  // ── ELEMENTS ──
+  const els = {
+    chatMessages: document.getElementById('chatMessages'),
+    channelInput: document.getElementById('channelInput'),
+    channelTags: document.getElementById('channelTags'),
+    connectBtn: document.getElementById('connectBtn'),
+    disconnectBtn: document.getElementById('disconnectBtn'),
+    scrollBtn: document.getElementById('scrollBtn'),
+    emptyState: document.getElementById('emptyState'),
+    statChannels: document.getElementById('statChannels'),
+    statMessages: document.getElementById('statMessages'),
+  };
+
+  // ── SCROLL ──
+  els.chatMessages.addEventListener('scroll', () => {
+    const el = els.chatMessages;
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+    state.autoScroll = atBottom;
+    els.scrollBtn.classList.toggle('visible', !atBottom);
+  });
+
+  function scrollToBottom() {
+    state.autoScroll = true;
+    els.chatMessages.scrollTop = els.chatMessages.scrollHeight;
+    els.scrollBtn.classList.remove('visible');
+  }
+
+  function trimMessages() {
+    const msgs = els.chatMessages.querySelectorAll('.msg, .system-msg');
+    if (msgs.length > state.maxMessages) {
+      const toRemove = msgs.length - state.maxMessages;
+      for (let i = 0; i < toRemove; i++) {
+        msgs[i].remove();
+      }
+    }
+  }
+
+  // ── SYSTEM MESSAGE ──
+  function addSystemMsg(text, type = '') {
+    if (els.emptyState) els.emptyState.remove();
+    const div = document.createElement('div');
+    div.className = `system-msg ${type}`;
+    div.textContent = text;
+    els.chatMessages.appendChild(div);
+    if (state.autoScroll) scrollToBottom();
+  }
+
+  // ── CHAT MESSAGE ──
+  function addChatMsg(channel, username, content, emotes) {
+    if (els.emptyState) els.emptyState.remove();
+    state.messageCount++;
+    els.statMessages.textContent = state.messageCount;
+
+    const channelData = state.channels.get(channel);
+    const channelColor = channelData ? CHANNEL_COLORS[channelData.colorIndex % CHANNEL_COLORS.length] : '#888';
+
+    const div = document.createElement('div');
+    div.className = 'msg';
+
+    const time = new Date();
+    const timeStr = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    // Process emotes in content
+    let processedContent = escapeHtml(content);
+    if (emotes && Array.isArray(emotes)) {
+      for (const emote of emotes) {
+        if (emote && emote.name && emote.id) {
+          const imgTag = `<img class="emote" src="https://files.kick.com/emotes/${emote.id}/fullsize" alt="${escapeHtml(emote.name)}" title="${escapeHtml(emote.name)}" loading="lazy" onerror="this.replaceWith(document.createTextNode('${escapeHtml(emote.name)}'))">`;
+          // Replace [emote:ID:name] patterns or just the emote name
+          processedContent = processedContent.replace(
+            new RegExp(`\\[emote:(\\d+):${escapeRegex(emote.name)}\\]`, 'g'),
+            imgTag
+          );
+        }
+      }
+    }
+
+    div.innerHTML = `<span class="msg-time">${timeStr}</span><span class="msg-channel" style="background:${channelColor}22;color:${channelColor};border:1px solid ${channelColor}33">${escapeHtml(channel)}</span><span class="msg-user" style="color:${getUserColor(username)}">${escapeHtml(username)}</span> <span class="msg-content">${processedContent}</span>`;
+
+    els.chatMessages.appendChild(div);
+    trimMessages();
+    if (state.autoScroll) scrollToBottom();
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function escapeRegex(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  // ── TAGS ──
+  function updateTags() {
+    els.channelTags.innerHTML = '';
+    let connectedCount = 0;
+    state.channels.forEach((data, name) => {
+      if (data.status === 'connected') connectedCount++;
+      const tag = document.createElement('div');
+      tag.className = `tag ${data.status}`;
+      tag.innerHTML = `<span class="tag-dot"></span>${escapeHtml(name)}<span class="tag-close" onclick="removeChannel('${escapeHtml(name)}')">&times;</span>`;
+      els.channelTags.appendChild(tag);
+    });
+    els.statChannels.textContent = connectedCount;
+  }
+
+  function removeChannel(name) {
+    const data = state.channels.get(name);
+    if (data && data.chatroomId && state.ws && state.ws.readyState === WebSocket.OPEN) {
+      state.ws.send(JSON.stringify({
+        event: 'pusher:unsubscribe',
+        data: { channel: `chatrooms.${data.chatroomId}.v2` }
+      }));
+    }
+    state.channels.delete(name);
+    updateTags();
+    addSystemMsg(`Left channel: ${name}`, 'info-msg');
+    if (state.channels.size === 0) {
+      handleDisconnect();
+    }
+  }
+
+  // ── FETCH CHATROOM ID ──
+  async function fetchChatroomId(channelName) {
+    // Try the Kick API to get chatroom ID
+    try {
+      const resp = await fetch(`https://kick.com/api/v2/channels/${channelName}`);
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = await resp.json();
+      if (data.chatroom && data.chatroom.id) {
+        return data.chatroom.id;
+      }
+      throw new Error('No chatroom found');
+    } catch (e) {
+      // If direct API fails (likely due to CORS/Cloudflare), prompt user
+      throw new Error(`Could not fetch chatroom ID for "${channelName}". Kick's API may be blocked by Cloudflare. You can manually enter the chatroom ID.`);
+    }
+  }
+
+  // ── WEBSOCKET ──
+  function connectWebSocket() {
+    return new Promise((resolve, reject) => {
+      if (state.ws && state.ws.readyState === WebSocket.OPEN) {
+        resolve(state.ws);
+        return;
+      }
+
+      const ws = new WebSocket(PUSHER_URL);
+      state.ws = ws;
+
+      ws.onopen = () => {
+        addSystemMsg('WebSocket connected to Pusher', 'connected-msg');
+        resolve(ws);
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          handlePusherMessage(msg);
+        } catch (e) {
+          console.error('Failed to parse message:', e);
+        }
+      };
+
+      ws.onerror = (err) => {
+        addSystemMsg('WebSocket error', 'error-msg');
+        reject(err);
+      };
+
+      ws.onclose = () => {
+        addSystemMsg('WebSocket disconnected', 'error-msg');
+        state.ws = null;
+        state.channels.forEach((data, name) => {
+          data.status = 'error';
+        });
+        updateTags();
+        els.connectBtn.style.display = '';
+        els.disconnectBtn.style.display = 'none';
+      };
+    });
+  }
+
+  function subscribeToChatroom(chatroomId) {
+    if (!state.ws || state.ws.readyState !== WebSocket.OPEN) return;
+    state.ws.send(JSON.stringify({
+      event: 'pusher:subscribe',
+      data: { auth: '', channel: `chatrooms.${chatroomId}.v2` }
+    }));
+  }
+
+  function handlePusherMessage(msg) {
+    if (msg.event === 'pusher:connection_established') {
+      console.log('Pusher connection established');
+      return;
+    }
+
+    if (msg.event === 'pusher_internal:subscription_succeeded') {
+      const channel = msg.channel || '';
+      const chatroomId = channel.replace('chatrooms.', '').replace('.v2', '');
+      state.channels.forEach((data, name) => {
+        if (String(data.chatroomId) === chatroomId) {
+          data.status = 'connected';
+          addSystemMsg(`Connected to #${name} (chatroom ${chatroomId})`, 'connected-msg');
+        }
+      });
+      updateTags();
+      return;
+    }
+
+    if (msg.event === 'App\\Events\\ChatMessageEvent' || msg.event === 'App\\Events\\ChatMessageSentEvent') {
+      try {
+        const data = typeof msg.data === 'string' ? JSON.parse(msg.data) : msg.data;
+
+        let username = 'Unknown';
+        let content = '';
+        let emotes = [];
+        let chatroomId = '';
+
+        // Handle different message formats
+        if (data.sender && data.content) {
+          username = data.sender.username || 'Unknown';
+          content = data.content;
+          chatroomId = String(data.chatroom_id || '');
+        } else if (data.message) {
+          // Older format
+          username = data.user?.username || data.message?.sender?.username || 'Unknown';
+          content = data.message?.content || data.message?.message || '';
+          chatroomId = String(data.message?.chatroom_id || '');
+        }
+
+        // Extract emotes if available
+        if (data.emotes) emotes = data.emotes;
+        else if (data.message?.emotes) emotes = data.message.emotes;
+
+        // Find channel name from chatroom ID
+        let channelName = '?';
+        const channel = msg.channel || '';
+        const msgChatroomId = channel.replace('chatrooms.', '').replace('.v2', '');
+
+        state.channels.forEach((d, name) => {
+          if (String(d.chatroomId) === msgChatroomId || String(d.chatroomId) === chatroomId) {
+            channelName = name;
+          }
+        });
+
+        if (content) {
+          addChatMsg(channelName, username, content, emotes);
+        }
+      } catch (e) {
+        console.error('Error parsing chat message:', e, msg);
+      }
+      return;
+    }
+  }
+
+  // ── CONNECT HANDLER ──
+  async function handleConnect() {
+    const input = els.channelInput.value.trim();
+    if (!input) return;
+
+    const channelNames = input.split(/[,\s]+/).map(s => s.trim().toLowerCase()).filter(Boolean);
+    if (channelNames.length === 0) return;
+
+    els.connectBtn.style.display = 'none';
+    els.disconnectBtn.style.display = '';
+
+    try {
+      const ws = await connectWebSocket();
+
+      // For each channel, we need the chatroom ID
+      for (const name of channelNames) {
+        if (state.channels.has(name)) continue;
+
+        const colorIndex = state.colorIndex++;
+        state.channels.set(name, { chatroomId: null, status: 'connecting', colorIndex });
+        updateTags();
+
+        addSystemMsg(`Resolving chatroom ID for "${name}"...`, 'info-msg');
+
+        try {
+          const chatroomId = await fetchChatroomId(name);
+          const channelData = state.channels.get(name);
+          if (channelData) {
+            channelData.chatroomId = chatroomId;
+            subscribeToChatroom(chatroomId);
+          }
+        } catch (err) {
+          // If API fetch fails, try subscribing with a prompt for manual ID
+          addSystemMsg(`⚠ ${err.message}`, 'error-msg');
+          addSystemMsg(`Tip: You can enter a chatroom ID directly (e.g. "12345") instead of a channel name.`, 'info-msg');
+
+          // Check if the input is already a numeric ID
+          if (/^\d+$/.test(name)) {
+            const channelData = state.channels.get(name);
+            if (channelData) {
+              channelData.chatroomId = parseInt(name);
+              subscribeToChatroom(parseInt(name));
+            }
+          } else {
+            const channelData = state.channels.get(name);
+            if (channelData) channelData.status = 'error';
+            updateTags();
+          }
+        }
+      }
+    } catch (err) {
+      addSystemMsg(`Connection failed: ${err.message}`, 'error-msg');
+    }
+  }
+
+  // ── DISCONNECT ──
+  function handleDisconnect() {
+    if (state.ws) {
+      state.ws.close();
+      state.ws = null;
+    }
+    state.channels.clear();
+    state.colorIndex = 0;
+    updateTags();
+    els.connectBtn.style.display = '';
+    els.disconnectBtn.style.display = 'none';
+    addSystemMsg('Disconnected from all channels', 'info-msg');
+  }
+
+  // ── CLEAR CHAT ──
+  function clearChat() {
+    els.chatMessages.innerHTML = '';
+    state.messageCount = 0;
+    els.statMessages.textContent = '0';
+    if (state.channels.size === 0) {
+      els.chatMessages.innerHTML = `
+        <div class="empty-state" id="emptyState">
+          <div class="empty-icon">💬</div>
+          <div class="empty-title">No channels connected</div>
+          <div class="empty-desc">Enter Kick channel names above and click Connect to start viewing combined chat messages in real time.</div>
+        </div>`;
+    }
+  }
+
+  // ── DEMO MODE (for when Kick API is blocked) ──
+  // Users can also enter chatroom IDs directly as numbers
+  // e.g., "15034797" instead of "xqc"
+</script>
+</body>
+</html>
